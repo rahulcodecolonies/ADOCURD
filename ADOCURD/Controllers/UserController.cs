@@ -22,7 +22,7 @@ namespace ADOCURD.Controllers
             List<UserModel> users = new List<UserModel>();
             DataTable dt = new DataTable();
             SqlConnection cons = new SqlConnection(_configuration.GetConnectionString("con"));
-            SqlCommand cmd = new SqlCommand("SELECT * FROM Users", cons);
+            SqlCommand cmd = new SqlCommand("GetUsers", cons);
             SqlDataAdapter adapter = new SqlDataAdapter(cmd);
             adapter.Fill(dt);
             for (int i = 0; i < dt.Rows.Count; i++)
@@ -34,8 +34,8 @@ namespace ADOCURD.Controllers
                 pModel.Gender = dt.Rows[i]["Gender"].ToString();
                 pModel.Class = dt.Rows[i]["Class"].ToString();
                 pModel.Subject = dt.Rows[i]["Subject"].ToString();
-                pModel.DOB = Convert.ToDateTime(dt.Rows[i]["DOB"]); // Convert to DateTime
-                users.Add(pModel); // Use Add method instead of Add
+                pModel.DOB = Convert.ToDateTime(dt.Rows[i]["DOB"]); 
+                users.Add(pModel);
             }
             return Ok(users);
         }
@@ -46,7 +46,18 @@ namespace ADOCURD.Controllers
             try
             {
                 SqlConnection con = new SqlConnection(_configuration.GetConnectionString("con"));
-                SqlCommand cmd = new SqlCommand("INSERT INTO Users (Name, Email, Gender, Class, Subject, DOB) VALUES ('" + obj.Name + "', '" + obj.Email + "', '" + obj.Gender + "', '" + obj.Class + "', '" + obj.Subject + "', '" + obj.DOB.ToString("yyyy-MM-dd") + "')", con);
+                SqlCommand cmd = new SqlCommand("InsertUser", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // Add parameters to the SqlCommand
+                cmd.Parameters.AddWithValue("@Name", obj.Name);
+                cmd.Parameters.AddWithValue("@Email", obj.Email);
+                cmd.Parameters.AddWithValue("@Gender", obj.Gender);
+                cmd.Parameters.AddWithValue("@Class", obj.Class);
+                cmd.Parameters.AddWithValue("@Subject", obj.Subject);
+                cmd.Parameters.AddWithValue("@DOB", obj.DOB);
+
+              
                 con.Open();
                 cmd.ExecuteNonQuery();
                 con.Close();
@@ -63,8 +74,17 @@ namespace ADOCURD.Controllers
         {
             try
             {
-                SqlConnection con = new SqlConnection(_configuration.GetConnectionString("con"));
-                SqlCommand cmd = new SqlCommand("Update Users set Name='" + obj.Name + "',Email='" + obj.Email + "',Gender='"+obj.Gender+"',Class='"+obj.Class+"',Subject='"+obj.Subject+"',DOB='"+obj.DOB+"' where Email='" + obj.Email + "'", con);
+                SqlConnection con = new SqlConnection(_configuration.GetConnectionString("con"));             
+                SqlCommand cmd = new SqlCommand("UpdateUser", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // Add parameters to the SqlCommand
+                cmd.Parameters.AddWithValue("@Name", obj.Name);
+                cmd.Parameters.AddWithValue("@Email", obj.Email);
+                cmd.Parameters.AddWithValue("@Gender", obj.Gender);
+                cmd.Parameters.AddWithValue("@Class", obj.Class);
+                cmd.Parameters.AddWithValue("@Subject", obj.Subject);
+                cmd.Parameters.AddWithValue("@DOB", obj.DOB);
                 con.Open();
                 cmd.ExecuteNonQuery();
                 con.Close();
@@ -81,12 +101,12 @@ namespace ADOCURD.Controllers
         {
             try
             {
-                using (SqlConnection con = new SqlConnection(_configuration.GetConnectionString("con")))
-                {
-                    SqlCommand cmd = new SqlCommand("DELETE FROM Users WHERE Email = @Email", con);
+                    SqlConnection con = new SqlConnection(_configuration.GetConnectionString("con"));                
+                    SqlCommand cmd = new SqlCommand("DeleteUser", con);
+                    cmd.CommandType= CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@Email", Email);
                     con.Open();
-                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    int rowsAffected = cmd.ExecuteNonQuery();
                     con.Close();
 
                     if (rowsAffected > 0)
@@ -97,7 +117,7 @@ namespace ADOCURD.Controllers
                     {
                         return NotFound($"User with Email {Email} not found.");
                     }
-                }
+                
             }
             catch (Exception ex)
             {
